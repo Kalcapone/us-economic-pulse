@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Admin — Pending Users{% endblock %}
+
+{% block body %}
+<div class="card card-wide">
+  <div class="wordmark">US Economic Pulse — Admin</div>
+  <h1>Pending approvals</h1>
+  <p class="subtitle">Users awaiting access to the dashboard</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="alerts">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% if pending %}
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Registered</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in pending %}
+        <tr>
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            <div class="actions">
+              <form method="POST" action="{{ url_for('admin.approve', user_id=user.id) }}">
+                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.reject', user_id=user.id) }}">
+                <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty-state">No pending registrations.</p>
+  {% endif %}
+
+  <div class="card-footer" style="margin-top:24px;">
+    <a href="{{ url_for('index') }}">← Back to dashboard</a>
+  </div>
+</div>
+{% endblock %}

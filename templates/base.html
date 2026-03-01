@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}US Economic Pulse{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:         #060c1a;
+      --bg2:        #080f21;
+      --surface:    rgba(255,255,255,0.040);
+      --surface-md: rgba(255,255,255,0.065);
+      --border:     rgba(255,255,255,0.075);
+      --border-md:  rgba(255,255,255,0.13);
+
+      --blue:       #3b82f6;
+      --blue-glow:  rgba(59,130,246,0.18);
+      --cyan:       #22d3ee;
+      --green:      #10b981;
+      --red:        #f43f5e;
+      --amber:      #f59e0b;
+
+      --text:       #e2eaf8;
+      --text-md:    #94a3b8;
+      --text-dim:   #4a5568;
+
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+      --font-body:    'Inter', sans-serif;
+
+      --r:          12px;
+      --transition: 200ms cubic-bezier(0.4,0,0.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      /* subtle radial glow */
+      background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.08), transparent);
+    }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 420px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ── Wordmark ─────────────────────────────────────────────── */
+    .wordmark {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wordmark::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 8px var(--blue);
+    }
+
+    /* ── Headings ─────────────────────────────────────────────── */
+    h1 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: var(--text-md);
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .field { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-md);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-md);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-glow);
+    }
+    input::placeholder { color: var(--text-dim); }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 11px 20px;
+      border-radius: 8px;
+      border: none;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: opacity var(--transition), box-shadow var(--transition);
+    }
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(59,130,246,0.3);
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-sm {
+      width: auto;
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-danger  { background: var(--red);   color: #fff; }
+    .btn-success:hover, .btn-danger:hover { opacity: 0.85; }
+
+    /* ── Alerts ───────────────────────────────────────────────── */
+    .alerts { margin-bottom: 20px; }
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 8px;
+      border-left: 3px solid;
+    }
+    .alert-danger  { background: rgba(244,63,94,0.12);  border-color: var(--red);   color: #fca5a5; }
+    .alert-warning { background: rgba(245,158,11,0.12); border-color: var(--amber); color: #fcd34d; }
+    .alert-success { background: rgba(16,185,129,0.12); border-color: var(--green); color: #6ee7b7; }
+    .alert-info    { background: rgba(59,130,246,0.12); border-color: var(--blue);  color: #93c5fd; }
+
+    /* ── Footer link ──────────────────────────────────────────── */
+    .card-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-md);
+    }
+    .card-footer a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .card-footer a:hover { text-decoration: underline; }
+
+    /* ── Table (admin) ────────────────────────────────────────── */
+    .card-wide { max-width: 760px; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    td {
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-md);
+      font-size: 13px;
+    }
+    td:first-child { color: var(--text); font-weight: 500; }
+    tr:last-child td { border-bottom: none; }
+    .actions { display: flex; gap: 8px; }
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  {% block body %}{% endblock %}
+</body>
+</html>
