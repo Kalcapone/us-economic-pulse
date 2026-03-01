@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US Economic Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ─── DESIGN TOKENS ─────────────────────────────────────────── */
+    :root {
+      --bg:          #060c1a;
+      --bg2:         #080f21;
+      --surface:     rgba(255,255,255,0.040);
+      --surface-md:  rgba(255,255,255,0.065);
+      --border:      rgba(255,255,255,0.075);
+      --border-md:   rgba(255,255,255,0.13);
+
+      --blue:        #3b82f6;
+      --blue-glow:   rgba(59,130,246,0.18);
+      --cyan:        #22d3ee;
+      --cyan-glow:   rgba(34,211,238,0.15);
+      --green:       #10b981;
+      --green-glow:  rgba(16,185,129,0.20);
+      --red:         #f43f5e;
+      --red-glow:    rgba(244,63,94,0.20);
+      --amber:       #f59e0b;
+      --amber-glow:  rgba(245,158,11,0.18);
+
+      --text:        #e2eaf8;
+      --text-md:     #94a3b8;
+      --text-dim:    #4a5568;
+
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+      --font-body:    'Inter', sans-serif;
+
+      --r:           12px;
+      --r-lg:        18px;
+      --transition:  200ms cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ─── RESET ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── BACKGROUND TEXTURE ─────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(255,255,255,0.0075) 2px,
+          rgba(255,255,255,0.0075) 4px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 90% 80%, rgba(34,211,238,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── GLASS CARD ─────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: relative;
+      z-index: 1;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .card:hover {
+      border-color: var(--border-md);
+      box-shadow: 0 0 32px rgba(59,130,246,0.10);
+    }
+    .card.clickable {
+      cursor: pointer;
+    }
+    .card.clickable:hover {
+      box-shadow: 0 0 40px rgba(59,130,246,0.16), 0 0 0 1px rgba(59,130,246,0.25);
+    }
+    .card.clickable:active {
+      transform: scale(0.99);
+    }
+
+    /* ─── HEADER ─────────────────────────────────────────────────── */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      background: rgba(6,12,26,0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 0 14px rgba(59,130,246,0.45);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .last-updated {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-md);
+      letter-spacing: 0.01em;
+    }
+    .source-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(34,211,238,0.08);
+      border: 1px solid rgba(34,211,238,0.20);
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+
+    /* ─── TICKER ─────────────────────────────────────────────────── */
+    .ticker-wrap {
+      overflow: hidden;
+      background: rgba(6,12,26,0.6);
+      border-bottom: 1px solid var(--border);
+      height: 38px;
+      display: flex;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .ticker-wrap::before,
+    .ticker-wrap::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 60px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .ticker-wrap::before {
+      left: 0;
+      background: linear-gradient(to right, rgba(6,12,26,0.95), transparent);
+    }
+    .ticker-wrap::after {
+      right: 0;
+      background: linear-gradient(to left, rgba(6,12,26,0.95), transparent);
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 0;
+      white-space: nowrap;
+      animation: ticker-scroll 60s linear infinite;
+      will-change: transform;
+    }
+    .ticker-wrap:hover .ticker-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 18px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    .ticker-label {
+      color: var(--text-md);
+      letter-spacing: 0.04em;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .ticker-value {
+      color: var(--text);
+      font-weight: 400;
+    }
+    .ticker-delta { font-size: 10.5px; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .neu { color: var(--text-md); }
+
+    /* ─── MAIN CONTENT ───────────────────────────────────────────── */
+    .main-content {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── HERO CHART ─────────────────────────────────────────────── */
+    .hero-card {
+      padding: 28px 28px 20px;
+      margin-bottom: 36px;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hero-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-md);
+      margin-bottom: 6px;
+    }
+    .hero-value {
+      font-family: var(--font-display);
+      font-size: 38px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .hero-delta {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      margin-top: 7px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    .tf-pills {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      align-self: flex-start;
+    }
+    .tf-pill {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-md);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .tf-pill:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+    .tf-pill.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(59,130,246,0.4);
+    }
+
+    .hero-chart-container {
+      height: 240px;
+      position: relative;
+    }
+
+    /* ─── SECTION HEADERS ────────────────────────────────────────── */
+    .section-block {
+      margin-bottom: 36px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--text-md);
+    }
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .section-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* ─── STAT CARD GRID ─────────────────────────────────────────── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .cards-grid.wide {
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+
+    .stat-card {
+      padding: 18px 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .stat-name {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-md);
+      line-height: 1.4;
+      max-width: 70%;
+    }
+
+    .delta-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 400;
+      white-space: nowrap;
+    }
+    .delta-badge.pos {
+      background: rgba(16,185,129,0.12);
+      color: var(--green);
+    }
+    .delta-badge.neg {
+      background: rgba(244,63,94,0.12);
+      color: var(--red);
+    }
+    .delta-badge.neu {
+      background: rgba(148,163,184,0.10);
+      color: var(--text-md);
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-value.pos { color: var(--green); }
+    .stat-value.neg { color: var(--red); }
+    .stat-value.neu { color: var(--text); }
+    .stat-value.warn { color: var(--amber); }
+
+    .stat-sub {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--text-dim);
+      margin-top: -2px;
+      letter-spacing: 0.01em;
+    }
+
+    .sparkline-container {
+      height: 44px;
+      position: relative;
+      margin-top: 4px;
+    }
+
+    .stat-click-hint {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-align: right;
+      margin-top: 2px;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .stat-card:hover .stat-click-hint { opacity: 1; }
+
+    /* ─── LOADING SKELETON ───────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface-md) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+
+    .stat-value.loading {
+      display: block;
+      width: 80px;
+      height: 30px;
+    }
+
+    /* ─── MODAL ──────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6,12,26,0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms ease;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 76vh;
+      background: #0a1225;
+      border-top: 1px solid var(--border-md);
+      border-radius: 20px 20px 0 0;
+      z-index: 201;
+      transform: translateY(100%);
+      transition: transform 360ms cubic-bezier(0.32, 0.72, 0, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-panel.open {
+      transform: translateY(0);
+    }
+
+    .modal-drag-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--border-md);
+      border-radius: 2px;
+      margin: 12px auto 0;
+      flex-shrink: 0;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 16px 28px 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title-block {}
+    .modal-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-md);
+      margin-bottom: 3px;
+    }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .modal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .modal-value-display {
+      text-align: right;
+    }
+    .modal-current-value {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.015em;
+    }
+    .modal-current-delta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.01em;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .modal-close:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .modal-tf-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 28px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-chart-wrap {
+      flex: 1;
+      min-height: 200px;
+      position: relative;
+    }
+
+    .modal-description {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      flex-shrink: 0;
+    }
+    .modal-description p {
+      font-size: 13px;
+      color: var(--text-md);
+      line-height: 1.65;
+    }
+    .modal-description p strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+    .modal-source-note {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+
+    /* ─── VIX GAUGE ──────────────────────────────────────────────── */
+    .gauge-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .gauge-svg { width: 100%; max-width: 160px; }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      background: rgba(6,12,26,0.6);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .footer-text {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.02em;
+    }
+    .footer-text a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+    .footer-text a:hover { text-decoration: underline; }
+
+    /* ─── REFRESH PULSE ──────────────────────────────────────────── */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+      50% { box-shadow: 0 0 0 4px rgba(16,185,129,0.25); }
+    }
+    .refreshing {
+      animation: pulse-glow 1s ease 1;
+    }
+
+    /* ─── SECTION COLORS ─────────────────────────────────────────── */
+    .section-accent-markets  { color: var(--cyan); }
+    .section-accent-inflation { color: var(--amber); }
+    .section-accent-labor    { color: var(--green); }
+    .section-accent-consumer { color: var(--blue); }
+    .section-accent-housing  { color: #a78bfa; }
+    .section-accent-economy  { color: #fb7185; }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .hero-value { font-size: 32px; }
+      .main-content { padding: 20px 16px 60px; }
+      .modal-header { padding: 12px 16px 10px; }
+      .modal-tf-row { padding: 8px 16px; }
+      .modal-body { padding: 6px 16px 16px; }
+      .hero-card { padding: 20px 16px 16px; }
+      .header-right .last-updated { display: none; }
+    }
+
+    /* ─── ANIMATE IN ─────────────────────────────────────────────── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fade-up 0.5s cubic-bezier(0.4,0,0.2,1) both;
+    }
+    .hero-card    { animation-delay: 0.05s; }
+    .section-block:nth-child(1) { animation-delay: 0.10s; }
+    .section-block:nth-child(2) { animation-delay: 0.15s; }
+    .section-block:nth-child(3) { animation-delay: 0.20s; }
+    .section-block:nth-child(4) { animation-delay: 0.25s; }
+    .section-block:nth-child(5) { animation-delay: 0.30s; }
+    .section-block:nth-child(6) { animation-delay: 0.35s; }
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="logo">
+      <div class="logo-mark">EP</div>
+      US Economic Pulse
+    </div>
+    <div class="header-right">
+      <span class="last-updated" id="last-updated">Fetching data…</span>
+      <span class="source-badge">FRED · St. Louis Fed</span>
+    </div>
+  </header>
+
+  <!-- ── TICKER ─────────────────────────────────────────────────── -->
+  <div class="ticker-wrap">
+    <div class="ticker-track" id="ticker-track">
+      <!-- duplicated content injected by JS -->
+      <span class="ticker-item">
+        <span class="ticker-label">S&amp;P 500</span>
+        <span class="ticker-value" id="t-sp500">—</span>
+        <span class="ticker-delta neu" id="t-sp500-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">VIX</span>
+        <span class="ticker-value" id="t-vix">—</span>
+        <span class="ticker-delta neu" id="t-vix-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">10Y Yield</span>
+        <span class="ticker-value" id="t-gs10">—</span>
+        <span class="ticker-delta neu" id="t-gs10-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">2Y Yield</span>
+        <span class="ticker-value" id="t-gs2">—</span>
+        <span class="ticker-delta neu" id="t-gs2-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">Yield Curve</span>
+        <span class="ticker-value" id="t-t10y2y">—</span>
+        <span class="ticker-delta neu" id="t-t10y2y-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">Fed Funds</span>
+        <span class="ticker-value" id="t-fedfunds">—</span>
+        <span class="ticker-delta neu" id="t-fedfunds-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">30Y Mortgage</span>
+        <span class="ticker-value" id="t-mort30">—</span>
+        <span class="ticker-delta neu" id="t-mort30-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">Unemployment</span>
+        <span class="ticker-value" id="t-unrate">—</span>
+        <span class="ticker-delta neu" id="t-unrate-d">—</span>
+      </span>
+      <span class="ticker-item">
+        <span class="ticker-label">CPI YoY</span>
+        <span class="ticker-value" id="t-cpi">—</span>
+        <span class="ticker-delta neu" id="t-cpi-d">—</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- ── MAIN ───────────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Hero: S&P 500 -->
+    <div class="card hero-card animate-in" id="hero-card">
+      <div class="hero-top">
+        <div>
+          <div class="hero-label">S&amp;P 500 — Daily Closing</div>
+          <div class="hero-value" id="hero-value">—</div>
+          <div class="hero-delta neu" id="hero-delta">Loading…</div>
+        </div>
+        <div class="tf-pills" id="hero-tf">
+          <button class="tf-pill" data-tf="1M">1M</button>
+          <button class="tf-pill" data-tf="3M">3M</button>
+          <button class="tf-pill" data-tf="6M">6M</button>
+          <button class="tf-pill active" data-tf="1Y">1Y</button>
+          <button class="tf-pill" data-tf="5Y">5Y</button>
+          <button class="tf-pill" data-tf="MAX">MAX</button>
+        </div>
+      </div>
+      <div class="hero-chart-container">
+        <canvas id="hero-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- MARKETS -->
+    <div class="section-block animate-in">
+      <div class="section-header">
+        <span class="section-title section-accent-markets">Markets</span>
+        <div class="section-line"></div>
+        <span class="section-count">3 indicators</span>
+      </div>
+      <div class="cards-grid">
+        <div class="card stat-card clickable" data-indicator="VIXCLS">
+          <div class="stat-card-top">
+            <div class="stat-name">VIX<br/>Fear Index</div>
+            <div class="delta-badge neu" id="vixcls-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="vixcls-val">—</div>
+          <div class="stat-sub" id="vixcls-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-VIXCLS"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="DGS10">
+          <div class="stat-card-top">
+            <div class="stat-name">10-Year Treasury<br/>Yield</div>
+            <div class="delta-badge neu" id="dgs10-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="dgs10-val">—</div>
+          <div class="stat-sub" id="dgs10-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-DGS10"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="T10Y2Y">
+          <div class="stat-card-top">
+            <div class="stat-name">Yield Curve<br/>10Y minus 2Y</div>
+            <div class="delta-badge neu" id="t10y2y-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="t10y2y-val">—</div>
+          <div class="stat-sub" id="t10y2y-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-T10Y2Y"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFLATION -->
+    <div class="section-block animate-in">
+      <div class="section-header">
+        <span class="section-title section-accent-inflation">Inflation</span>
+        <div class="section-line"></div>
+        <span class="section-count">4 indicators</span>
+      </div>
+      <div class="cards-grid">
+        <div class="card stat-card clickable" data-indicator="CPIAUCSL">
+          <div class="stat-card-top">
+            <div class="stat-name">CPI Headline<br/>YoY %</div>
+            <div class="delta-badge neu" id="cpiaucsl-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="cpiaucsl-val">—</div>
+          <div class="stat-sub" id="cpiaucsl-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-CPIAUCSL"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="CPILFESL">
+          <div class="stat-card-top">
+            <div class="stat-name">Core CPI<br/>Ex-Food & Energy</div>
+            <div class="delta-badge neu" id="cpilfesl-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="cpilfesl-val">—</div>
+          <div class="stat-sub" id="cpilfesl-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-CPILFESL"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="PCEPI">
+          <div class="stat-card-top">
+            <div class="stat-name">PCE Inflation<br/>Fed's Target</div>
+            <div class="delta-badge neu" id="pcepi-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="pcepi-val">—</div>
+          <div class="stat-sub" id="pcepi-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-PCEPI"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="FEDFUNDS">
+          <div class="stat-card-top">
+            <div class="stat-name">Fed Funds<br/>Target Rate</div>
+            <div class="delta-badge neu" id="fedfunds-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="fedfunds-val">—</div>
+          <div class="stat-sub" id="fedfunds-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-FEDFUNDS"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LABOR -->
+    <div class="section-block animate-in">
+      <div class="section-header">
+        <span class="section-title section-accent-labor">Labor</span>
+        <div class="section-line"></div>
+        <span class="section-count">3 indicators</span>
+      </div>
+      <div class="cards-grid">
+        <div class="card stat-card clickable" data-indicator="UNRATE">
+          <div class="stat-card-top">
+            <div class="stat-name">Unemployment<br/>Rate</div>
+            <div class="delta-badge neu" id="unrate-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="unrate-val">—</div>
+          <div class="stat-sub" id="unrate-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-UNRATE"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="PAYEMS">
+          <div class="stat-card-top">
+            <div class="stat-name">Nonfarm Payrolls<br/>MoM Change</div>
+            <div class="delta-badge neu" id="payems-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="payems-val">—</div>
+          <div class="stat-sub" id="payems-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-PAYEMS"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="CIVPART">
+          <div class="stat-card-top">
+            <div class="stat-name">Labor Force<br/>Participation</div>
+            <div class="delta-badge neu" id="civpart-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="civpart-val">—</div>
+          <div class="stat-sub" id="civpart-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-CIVPART"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSUMER -->
+    <div class="section-block animate-in">
+      <div class="section-header">
+        <span class="section-title section-accent-consumer">Consumer</span>
+        <div class="section-line"></div>
+        <span class="section-count">2 indicators</span>
+      </div>
+      <div class="cards-grid">
+        <div class="card stat-card clickable" data-indicator="UMCSENT">
+          <div class="stat-card-top">
+            <div class="stat-name">Consumer Sentiment<br/>U of Michigan</div>
+            <div class="delta-badge neu" id="umcsent-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="umcsent-val">—</div>
+          <div class="stat-sub" id="umcsent-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-UMCSENT"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="RSXFS">
+          <div class="stat-card-top">
+            <div class="stat-name">Retail Sales<br/>MoM Change</div>
+            <div class="delta-badge neu" id="rsxfs-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="rsxfs-val">—</div>
+          <div class="stat-sub" id="rsxfs-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-RSXFS"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOUSING -->
+    <div class="section-block animate-in">
+      <div class="section-header">
+        <span class="section-title section-accent-housing">Housing</span>
+        <div class="section-line"></div>
+        <span class="section-count">3 indicators</span>
+      </div>
+      <div class="cards-grid">
+        <div class="card stat-card clickable" data-indicator="MORTGAGE30US">
+          <div class="stat-card-top">
+            <div class="stat-name">30-Year Fixed<br/>Mortgage Rate</div>
+            <div class="delta-badge neu" id="mortgage30us-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="mortgage30us-val">—</div>
+          <div class="stat-sub" id="mortgage30us-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-MORTGAGE30US"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="HOUST">
+          <div class="stat-card-top">
+            <div class="stat-name">Housing Starts<br/>SAAR, Thousands</div>
+            <div class="delta-badge neu" id="houst-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="houst-val">—</div>
+          <div class="stat-sub" id="houst-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-HOUST"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="EXHOSLUSM495S">
+          <div class="stat-card-top">
+            <div class="stat-name">Existing Home<br/>Sales, Millions</div>
+            <div class="delta-badge neu" id="exhoslusm495s-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="exhoslusm495s-val">—</div>
+          <div class="stat-sub" id="exhoslusm495s-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-EXHOSLUSM495S"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ECONOMY -->
+    <div class="section-block animate-in">
+      <div class="section-header">
+        <span class="section-title section-accent-economy">Economy</span>
+        <div class="section-line"></div>
+        <span class="section-count">2 indicators</span>
+      </div>
+      <div class="cards-grid">
+        <div class="card stat-card clickable" data-indicator="A191RL1Q225SBEA">
+          <div class="stat-card-top">
+            <div class="stat-name">Real GDP Growth<br/>Annualized %</div>
+            <div class="delta-badge neu" id="a191rl1q225sbea-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="a191rl1q225sbea-val">—</div>
+          <div class="stat-sub" id="a191rl1q225sbea-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-A191RL1Q225SBEA"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+        <div class="card stat-card clickable" data-indicator="INDPRO">
+          <div class="stat-card-top">
+            <div class="stat-name">Industrial<br/>Production Index</div>
+            <div class="delta-badge neu" id="indpro-delta">—</div>
+          </div>
+          <div class="stat-value neu" id="indpro-val">—</div>
+          <div class="stat-sub" id="indpro-sub">Loading…</div>
+          <div class="sparkline-container"><canvas id="spark-INDPRO"></canvas></div>
+          <div class="stat-click-hint">CLICK TO EXPAND →</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── FOOTER ──────────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <span class="footer-text">
+      Data: <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener">FRED, Federal Reserve Bank of St. Louis</a>
+      · Last refresh: <span id="footer-time">—</span>
+    </span>
+    <span class="footer-text">For informational purposes only. Not financial advice.</span>
+  </footer>
+
+  <!-- ── MODAL ───────────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="modal-overlay"></div>
+  <div class="modal-panel" id="modal-panel">
+    <div class="modal-drag-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <div class="modal-eyebrow" id="modal-eyebrow">Indicator</div>
+        <div class="modal-title" id="modal-title">—</div>
+      </div>
+      <div class="modal-header-right">
+        <div class="modal-value-display">
+          <div class="modal-current-value" id="modal-cur-val">—</div>
+          <div class="modal-current-delta neu" id="modal-cur-delta">—</div>
+        </div>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+    </div>
+    <div class="modal-tf-row" id="modal-tf"></div>
+    <div class="modal-body">
+      <div class="modal-chart-wrap">
+        <canvas id="modal-chart"></canvas>
+      </div>
+      <div class="modal-description">
+        <p id="modal-desc">—</p>
+        <div class="modal-source-note" id="modal-source">FRED Series —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────
+       JAVASCRIPT
+  ───────────────────────────────────────────────────────────────── -->
+  <script>
+  'use strict';
+
+  /* ── CONFIG ────────────────────────────────────────────────────── */
+  // Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html
+  const FRED_KEY = 'd7142b63c2ed58c6fb2fd36fcb696e0f';
+  const FRED_BASE = '/fred';
+
+  /* ── INDICATOR REGISTRY ─────────────────────────────────────────── */
+  const INDICATORS = {
+    SP500: {
+      title: 'S&P 500',
+      section: 'Markets',
+      unit: '',
+      format: v => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      freq: 'd',
+      chartType: 'line',
+      description: 'The S&P 500 tracks the stock performance of 500 large US companies. It is the single most widely watched measure of US stock market health. When people say "the market is up," they usually mean the S&P 500.',
+      deltaLabel: 'vs prior close',
+    },
+    VIXCLS: {
+      title: 'VIX — Fear Index',
+      section: 'Markets',
+      unit: '',
+      format: v => v.toFixed(2),
+      freq: 'd',
+      chartType: 'line',
+      description: '<strong>VIX below 20:</strong> Calm markets. <strong>20–30:</strong> Elevated concern. <strong>30+:</strong> Fear. <strong>40+:</strong> Panic. The VIX measures expected stock market volatility over the next 30 days, derived from S&P 500 options pricing. It is often called the "fear gauge."',
+      deltaLabel: 'vs prior day',
+      vixColors: true,
+    },
+    DGS10: {
+      title: '10-Year Treasury Yield',
+      section: 'Markets',
+      unit: '%',
+      format: v => v.toFixed(2) + '%',
+      freq: 'd',
+      chartType: 'line',
+      description: 'The 10-year Treasury yield is the interest rate the US government pays to borrow for 10 years. It benchmarks mortgage rates, auto loans, and corporate borrowing. When it rises, credit becomes more expensive across the entire economy.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    T10Y2Y: {
+      title: 'Yield Curve Spread',
+      section: 'Markets',
+      unit: '%',
+      format: v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%',
+      freq: 'd',
+      chartType: 'area-bicolor',
+      description: 'The yield curve spread (10-year minus 2-year Treasury yield) is one of the most reliable recession indicators. <strong>When it goes negative (inverted)</strong>, it has preceded every US recession in modern history within 6–18 months.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    CPIAUCSL: {
+      title: 'CPI — Consumer Price Index',
+      section: 'Inflation',
+      unit: '% YoY',
+      format: v => v.toFixed(1) + '%',
+      freq: 'm',
+      chartType: 'line',
+      yoyCompute: true,
+      description: 'The Consumer Price Index measures average price changes for a basket of goods and services. The year-over-year change is what the media reports as "inflation." The Fed\'s informal target is <strong>2% annual inflation</strong>.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    CPILFESL: {
+      title: 'Core CPI',
+      section: 'Inflation',
+      unit: '% YoY',
+      format: v => v.toFixed(1) + '%',
+      freq: 'm',
+      chartType: 'line',
+      yoyCompute: true,
+      description: 'Core CPI strips out volatile food and energy prices. Economists and the Fed watch this more closely than headline CPI because it reveals persistent, underlying inflation trends that monetary policy can actually influence.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    PCEPI: {
+      title: 'PCE Inflation Index',
+      section: 'Inflation',
+      unit: '% YoY',
+      format: v => v.toFixed(1) + '%',
+      freq: 'm',
+      chartType: 'line',
+      yoyCompute: true,
+      description: 'The Personal Consumption Expenditures price index is <strong>the Federal Reserve\'s preferred inflation measure</strong>. The Fed officially targets 2% annual PCE growth. Understanding PCE explains Fed rate decisions more directly than CPI alone.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    FEDFUNDS: {
+      title: 'Federal Funds Rate',
+      section: 'Inflation',
+      unit: '%',
+      format: v => v.toFixed(2) + '%',
+      freq: 'm',
+      chartType: 'step',
+      description: 'The federal funds rate is the interest rate banks charge each other for overnight loans, set by the Federal Reserve. It is the primary lever the Fed uses to control inflation and economic growth, directly influencing your savings account APY, credit card rates, and mortgage rates.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    UNRATE: {
+      title: 'Unemployment Rate',
+      section: 'Labor',
+      unit: '%',
+      format: v => v.toFixed(1) + '%',
+      freq: 'm',
+      chartType: 'line',
+      description: 'The unemployment rate measures the percentage of people actively seeking work who cannot find it. The Fed considers <strong>4–5% "full employment."</strong> This is released the first Friday of each month and is one of the most market-moving data releases.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    PAYEMS: {
+      title: 'Nonfarm Payrolls',
+      section: 'Labor',
+      unit: 'K jobs added',
+      format: v => (v >= 0 ? '+' : '') + v.toLocaleString('en-US', { maximumFractionDigits: 0 }) + 'K',
+      freq: 'm',
+      chartType: 'bar',
+      momCompute: true,
+      description: 'Nonfarm payrolls measures jobs added or lost each month. Economists consider <strong>+150,000 to +200,000 per month healthy</strong>. This is the single most market-moving monthly data release. Negative readings signal economic contraction.',
+      deltaLabel: 'jobs added this month',
+    },
+    CIVPART: {
+      title: 'Labor Force Participation',
+      section: 'Labor',
+      unit: '%',
+      format: v => v.toFixed(1) + '%',
+      freq: 'm',
+      chartType: 'line',
+      description: 'Labor force participation measures the share of working-age Americans who are employed or actively job-hunting. A falling unemployment rate can be misleading if people are simply giving up on looking for work. This indicator provides critical context.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    UMCSENT: {
+      title: 'Consumer Sentiment',
+      section: 'Consumer',
+      unit: 'index',
+      format: v => v.toFixed(1),
+      freq: 'm',
+      chartType: 'line',
+      description: 'The University of Michigan Consumer Sentiment Index measures US households\' feelings about personal finances and economic conditions. <strong>Historical average ~85–90.</strong> When consumers feel pessimistic they spend less, which can slow the broader economy.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    RSXFS: {
+      title: 'Retail Sales',
+      section: 'Consumer',
+      unit: '% MoM',
+      format: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%',
+      freq: 'm',
+      chartType: 'bar',
+      momPctCompute: true,
+      description: 'Retail sales measures total receipts at US retail stores month-over-month. Consumer spending drives <strong>~70% of US GDP</strong>, making retail sales a direct, timely indicator of economic activity and consumer confidence.',
+      deltaLabel: 'MoM change',
+    },
+    MORTGAGE30US: {
+      title: '30-Year Fixed Mortgage Rate',
+      section: 'Housing',
+      unit: '%',
+      format: v => v.toFixed(2) + '%',
+      freq: 'w',
+      chartType: 'line',
+      description: 'The 30-year fixed mortgage rate is the single number most directly relevant to any American who owns or wants to buy a home. It largely moves with the 10-year Treasury yield and is surveyed weekly by Freddie Mac.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    HOUST: {
+      title: 'Housing Starts',
+      section: 'Housing',
+      unit: 'K units SAAR',
+      format: v => v.toFixed(0) + 'K',
+      freq: 'm',
+      chartType: 'line',
+      description: 'Housing starts counts new privately-owned housing units that began construction. It is a leading economic indicator — homebuilding drives significant economic activity (materials, labor, appliances, furniture) and signals builder confidence in future demand.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    EXHOSLUSM495S: {
+      title: 'Existing Home Sales',
+      section: 'Housing',
+      unit: 'M units',
+      format: v => (v / 1000).toFixed(2) + 'M',
+      freq: 'm',
+      chartType: 'line',
+      description: 'Existing home sales tracks previously-owned homes sold each month, reported by the National Association of Realtors. Existing homes make up ~90% of the housing market. Falling sales often reflect affordability challenges from high mortgage rates.',
+      deltaLabel: 'vs 1 year ago',
+    },
+    A191RL1Q225SBEA: {
+      title: 'Real GDP Growth Rate',
+      section: 'Economy',
+      unit: '% annualized',
+      format: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%',
+      freq: 'q',
+      chartType: 'bar',
+      description: 'Real GDP measures the total value of goods and services produced in the US. The quarterly annualized growth rate tells you whether the economy is expanding or contracting. <strong>Two consecutive negative quarters</strong> is the informal definition of a recession.',
+      deltaLabel: 'vs prior quarter',
+    },
+    INDPRO: {
+      title: 'Industrial Production Index',
+      section: 'Economy',
+      unit: 'index',
+      format: v => v.toFixed(2),
+      freq: 'm',
+      chartType: 'line',
+      description: 'The Industrial Production Index measures real output of US manufacturing, mining, and utilities. A leading economic indicator — factories slowing down often precedes broader economic slowdowns. Includes motor vehicles, electronics, and energy production.',
+      deltaLabel: 'vs 1 year ago',
+    },
+  };
+
+  /* ── DATE HELPERS ────────────────────────────────────────────── */
+  function fmtDate(d) {
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysAgo(n) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  }
+  function jan1() {
+    return new Date().getFullYear() + '-01-01';
+  }
+  function startFor(tf) {
+    const map = {
+      '1M': daysAgo(35), '3M': daysAgo(95), '6M': daysAgo(185),
+      'YTD': jan1(),     '1Y': daysAgo(370), '2Y': daysAgo(740),
+      '5Y': daysAgo(1830), '10Y': daysAgo(3660), 'MAX': '1950-01-01',
+    };
+    return map[tf] || daysAgo(370);
+  }
+  function tfOptions(freq) {
+    if (freq === 'd') return ['1M','3M','6M','1Y','5Y','MAX'];
+    if (freq === 'w') return ['3M','6M','1Y','5Y','10Y'];
+    if (freq === 'm') return ['1Y','2Y','5Y','10Y'];
+    if (freq === 'q') return ['5Y','10Y','MAX'];
+    return ['1Y','5Y','MAX'];
+  }
+
+  /* ── FETCH ───────────────────────────────────────────────────── */
+  const cache = {};
+  async function fetchFRED(seriesId, start, freq) {
+    const cacheKey = `${seriesId}|${start}|${freq}`;
+    if (cache[cacheKey]) return cache[cacheKey];
+    const url = `${FRED_BASE}?series_id=${seriesId}&api_key=${FRED_KEY}` +
+      `&observation_start=${start}&frequency=${freq}&file_type=json&sort_order=asc`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!json.observations) throw new Error('No observations in response');
+      const data = json.observations
+        .filter(o => o.value !== '.' && !isNaN(parseFloat(o.value)))
+        .map(o => ({ date: o.date, value: parseFloat(o.value) }));
+      cache[cacheKey] = data;
+      return data;
+    } catch (e) {
+      console.warn(`FRED fetch failed for ${seriesId}:`, e.message);
+      return null;
+    }
+  }
+
+  /* ── COMPUTED VALUES ─────────────────────────────────────────── */
+  function computeYoY(data) {
+    if (!data || data.length < 2) return data;
+    return data.map((pt, i) => {
+      // find point ~12 months ago
+      const targetDate = new Date(pt.date + 'T00:00:00');
+      targetDate.setFullYear(targetDate.getFullYear() - 1);
+      const target = targetDate.getTime();
+      let closest = null, minDiff = Infinity;
+      for (let j = 0; j < i; j++) {
+        const d = new Date(data[j].date + 'T00:00:00').getTime();
+        const diff = Math.abs(d - target);
+        if (diff < minDiff) { minDiff = diff; closest = data[j]; }
+      }
+      if (!closest || closest.value === 0) return null;
+      const yoy = (pt.value - closest.value) / Math.abs(closest.value) * 100;
+      return { date: pt.date, value: yoy };
+    }).filter(Boolean);
+  }
+
+  function computeMoM(data) {
+    if (!data || data.length < 2) return [];
+    return data.slice(1).map((pt, i) => ({
+      date: pt.date,
+      value: pt.value - data[i].value,
+    }));
+  }
+
+  function computeMoMPct(data) {
+    if (!data || data.length < 2) return [];
+    return data.slice(1).map((pt, i) => {
+      const prev = data[i].value;
+      if (prev === 0) return null;
+      return { date: pt.date, value: (pt.value - prev) / Math.abs(prev) * 100 };
+    }).filter(Boolean);
+  }
+
+  function processData(id, raw) {
+    const ind = INDICATORS[id];
+    if (!raw) return raw;
+    if (ind.yoyCompute)    return computeYoY(raw);
+    if (ind.momCompute)    return computeMoM(raw);
+    if (ind.momPctCompute) return computeMoMPct(raw);
+    return raw;
+  }
+
+  /* ── CHART COLORS ────────────────────────────────────────────── */
+  const CHART_DEFAULTS = {
+    color: '#22d3ee',
+    borderWidth: 2,
+    pointRadius: 0,
+    tension: 0.3,
+  };
+
+  function makeGradient(ctx, canvas, color1, color2) {
+    const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    g.addColorStop(0, color1);
+    g.addColorStop(1, color2);
+    return g;
+  }
+
+  function getLineColor(seriesId) {
+    const map = {
+      SP500: '#22d3ee',  VIXCLS: '#f59e0b', DGS10: '#3b82f6',
+      T10Y2Y: '#a78bfa', CPIAUCSL: '#fb923c', CPILFESL: '#f59e0b',
+      PCEPI: '#fbbf24',  FEDFUNDS: '#ef4444', UNRATE: '#10b981',
+      PAYEMS: '#10b981', CIVPART: '#34d399', UMCSENT: '#60a5fa',
+      RSXFS: '#3b82f6',  MORTGAGE30US: '#a78bfa', HOUST: '#c084fc',
+      EXHOSLUSM495S: '#e879f9', A191RL1Q225SBEA: '#fb7185', INDPRO: '#f43f5e',
+    };
+    return map[seriesId] || '#22d3ee';
+  }
+
+  /* ── CHART RENDERING ─────────────────────────────────────────── */
+  Chart.defaults.font.family = "'JetBrains Mono', monospace";
+  Chart.defaults.color = '#4a5568';
+
+  const chartInstances = {};
+
+  function buildChartConfig(id, data, type, canvas) {
+    const ctx = canvas.getContext('2d');
+    const color = getLineColor(id);
+    const labels = data.map(d => d.date);
+    const values = data.map(d => d.value);
+
+    const baseDataset = {
+      data: values,
+      borderColor: color,
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: type === 'step' ? 0 : 0.3,
+      stepped: type === 'step' ? 'before' : false,
+    };
+
+    const tooltipOpts = {
+      mode: 'index',
+      intersect: false,
+      backgroundColor: 'rgba(8,15,33,0.92)',
+      borderColor: 'rgba(255,255,255,0.10)',
+      borderWidth: 1,
+      titleFont: { family: "'DM Mono', monospace", size: 11 },
+      bodyFont: { family: "'DM Mono', monospace", size: 12 },
+      titleColor: '#94a3b8',
+      bodyColor: '#e2eaf8',
+      padding: 10,
+      callbacks: {
+        title: items => fmtDate(labels[items[0].dataIndex]),
+        label: item => {
+          const ind = INDICATORS[id];
+          return ' ' + ind.format(item.raw);
+        },
+      },
+    };
+
+    const scalesOpts = {
+      x: {
+        display: true,
+        grid: { display: false },
+        border: { display: false },
+        ticks: {
+          maxTicksLimit: 6,
+          font: { size: 10 },
+          color: '#6b7a99',
+          maxRotation: 0,
+          callback: (_, i) => {
+            const label = labels[i];
+            if (!label) return '';
+            const d = new Date(label + 'T00:00:00');
+            return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+          },
+        },
+      },
+      y: {
+        display: true,
+        position: 'right',
+        grid: { color: 'rgba(255,255,255,0.04)', lineWidth: 1 },
+        border: { display: false, dash: [4, 4] },
+        ticks: {
+          font: { size: 10 },
+          color: '#6b7a99',
+          maxTicksLimit: 5,
+          callback: v => {
+            const ind = INDICATORS[id];
+            return ind.format(v);
+          },
+        },
+      },
+    };
+
+    if (type === 'line' || type === 'step') {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height || 240);
+      const hex = color;
+      grad.addColorStop(0, hex + '28');
+      grad.addColorStop(1, hex + '00');
+      baseDataset.fill = true;
+      baseDataset.backgroundColor = grad;
+      return {
+        type: 'line',
+        data: { labels, datasets: [baseDataset] },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false }, tooltip: tooltipOpts },
+          scales: scalesOpts,
+        },
+      };
+    }
+
+    if (type === 'bar') {
+      const barColors = values.map(v => v >= 0 ? 'rgba(16,185,129,0.75)' : 'rgba(244,63,94,0.75)');
+      const barBorders = values.map(v => v >= 0 ? '#10b981' : '#f43f5e');
+      return {
+        type: 'bar',
+        data: { labels, datasets: [{ data: values, backgroundColor: barColors, borderColor: barBorders, borderWidth: 1, borderRadius: 3 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false }, tooltip: tooltipOpts },
+          scales: {
+            ...scalesOpts,
+            y: {
+              ...scalesOpts.y,
+              afterDataLimits: scale => {
+                scale.max = Math.max(Math.abs(scale.min), Math.abs(scale.max)) * 1.1;
+                scale.min = -Math.max(Math.abs(scale.min), Math.abs(scale.max)) * 1.1;
+              },
+            },
+          },
+        },
+      };
+    }
+
+    if (type === 'area-bicolor') {
+      const posVals = values.map(v => v >= 0 ? v : 0);
+      const negVals = values.map(v => v < 0 ? v : 0);
+      return {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { data: posVals, fill: 'origin', backgroundColor: 'rgba(16,185,129,0.18)', borderColor: 'transparent', pointRadius: 0, tension: 0.3 },
+            { data: negVals, fill: 'origin', backgroundColor: 'rgba(244,63,94,0.18)', borderColor: 'transparent', pointRadius: 0, tension: 0.3 },
+            { data: values, borderColor: '#a78bfa', borderWidth: 2, pointRadius: 0, tension: 0.3,
+              pointHoverRadius: 4, fill: false },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              ...tooltipOpts,
+              filter: item => item.datasetIndex === 2,
+            },
+          },
+          scales: scalesOpts,
+        },
+      };
+    }
+
+    return null;
+  }
+
+  function renderChart(canvasId, id, data, type) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (chartInstances[canvasId]) {
+      chartInstances[canvasId].destroy();
+      delete chartInstances[canvasId];
+    }
+    if (!data || data.length === 0) return;
+    const cfg = buildChartConfig(id, data, type, canvas);
+    if (!cfg) return;
+    chartInstances[canvasId] = new Chart(canvas, cfg);
+  }
+
+  function renderSparkline(id, data) {
+    const canvasId = `spark-${id}`;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !data || data.length === 0) return;
+    if (chartInstances[canvasId]) {
+      chartInstances[canvasId].destroy();
+      delete chartInstances[canvasId];
+    }
+    const pts = data.slice(-16);
+    const values = pts.map(d => d.value);
+    const color = getLineColor(id);
+    const ind = INDICATORS[id];
+    const isBar = ind.chartType === 'bar';
+    let cfg;
+    if (isBar) {
+      const barColors = values.map(v => v >= 0 ? 'rgba(16,185,129,0.7)' : 'rgba(244,63,94,0.7)');
+      cfg = {
+        type: 'bar',
+        data: { labels: pts.map(d => d.date), datasets: [{ data: values, backgroundColor: barColors, borderRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } },
+      };
+    } else {
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 44);
+      grad.addColorStop(0, color + '30');
+      grad.addColorStop(1, color + '00');
+      cfg = {
+        type: 'line',
+        data: { labels: pts.map(d => d.date), datasets: [{ data: values, borderColor: color, borderWidth: 1.5, fill: true, backgroundColor: grad, pointRadius: 0, tension: 0.4 }] },
+        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } },
+      };
+    }
+    chartInstances[canvasId] = new Chart(canvas, cfg);
+  }
+
+  /* ── STAT CARD UPDATES ───────────────────────────────────────── */
+  function idKey(id) { return id.toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+  function updateStatCard(id, data) {
+    if (!data || data.length === 0) {
+      document.getElementById(`${idKey(id)}-val`).textContent = 'N/A';
+      document.getElementById(`${idKey(id)}-sub`).textContent = 'Data unavailable';
+      return;
+    }
+    const ind = INDICATORS[id];
+    const last = data[data.length - 1];
+    const prev = data.length > 1 ? data[data.length - 2] : null;
+
+    const valEl   = document.getElementById(`${idKey(id)}-val`);
+    const subEl   = document.getElementById(`${idKey(id)}-sub`);
+    const deltaEl = document.getElementById(`${idKey(id)}-delta`);
+
+    if (!valEl) return;
+
+    const formatted = ind.format(last.value);
+    valEl.textContent = formatted;
+
+    let colorClass = 'neu';
+    if (id === 'UNRATE' || id === 'CPIAUCSL' || id === 'CPILFESL' || id === 'PCEPI' || id === 'VIXCLS' || id === 'FEDFUNDS' || id === 'MORTGAGE30US') {
+      // For these, lower is generally better (green) — but just show neutral on value
+      colorClass = 'neu';
+    }
+
+    valEl.className = `stat-value ${colorClass}`;
+    subEl.textContent = `As of ${fmtDate(last.date)}`;
+
+    if (prev && deltaEl) {
+      const diff = last.value - prev.value;
+      const pct = prev.value !== 0 ? (diff / Math.abs(prev.value) * 100) : 0;
+      const sign = diff >= 0 ? '▲' : '▼';
+      const cls = diff >= 0 ? 'pos' : 'neg';
+
+      // For payrolls and GDP raw values are the delta already
+      let deltaText;
+      if (ind.momCompute || ind.momPctCompute || id === 'A191RL1Q225SBEA' || id === 'PAYEMS') {
+        deltaText = `${sign} ${ind.format(Math.abs(last.value))}`;
+      } else {
+        deltaText = `${sign} ${Math.abs(pct).toFixed(1)}%`;
+      }
+      deltaEl.textContent = deltaText;
+      deltaEl.className = `delta-badge ${cls}`;
+    }
+
+    renderSparkline(id, data);
+  }
+
+  function updateTicker(id, elId, data) {
+    if (!data || data.length === 0) return;
+    const ind = INDICATORS[id];
+    const last = data[data.length - 1];
+    const prev = data.length > 1 ? data[data.length - 2] : null;
+    const valEl   = document.getElementById(elId);
+    const deltaEl = document.getElementById(elId + '-d');
+    if (!valEl) return;
+    valEl.textContent = ind.format(last.value);
+    if (prev && deltaEl) {
+      const diff = last.value - prev.value;
+      const sign = diff >= 0 ? '▲' : '▼';
+      const cls  = diff >= 0 ? 'pos' : 'neg';
+      deltaEl.textContent = `${sign} ${Math.abs(diff).toFixed(2)}`;
+      deltaEl.className = `ticker-delta ${cls}`;
+    }
+  }
+
+  /* ── DUPLICATE TICKER FOR SEAMLESS SCROLL ──────────────────── */
+  function duplicateTicker() {
+    const track = document.getElementById('ticker-track');
+    const clone = track.cloneNode(true);
+    clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    track.parentElement.appendChild(clone);
+  }
+
+  /* ── MODAL ───────────────────────────────────────────────────── */
+  let modalOpen = false;
+  let currentModalId = null;
+  let currentModalTf = null;
+
+  function openModal(id) {
+    currentModalId = id;
+    const ind = INDICATORS[id];
+    const tfs = tfOptions(ind.freq);
+    currentModalTf = tfs[Math.floor(tfs.length / 2)]; // default middle option
+
+    document.getElementById('modal-eyebrow').textContent = ind.section;
+    document.getElementById('modal-title').textContent = ind.title;
+    document.getElementById('modal-desc').innerHTML = ind.description;
+    document.getElementById('modal-source').textContent = `FRED Series: ${id}`;
+
+    // Build TF pills
+    const tfRow = document.getElementById('modal-tf');
+    tfRow.innerHTML = '';
+    tfs.forEach(tf => {
+      const btn = document.createElement('button');
+      btn.className = `tf-pill${tf === currentModalTf ? ' active' : ''}`;
+      btn.textContent = tf;
+      btn.dataset.tf = tf;
+      btn.addEventListener('click', () => {
+        tfRow.querySelectorAll('.tf-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentModalTf = tf;
+        loadModalChart(id, tf);
+      });
+      tfRow.appendChild(btn);
+    });
+
+    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('modal-panel').classList.add('open');
+    modalOpen = true;
+    document.body.style.overflow = 'hidden';
+
+    loadModalChart(id, currentModalTf);
+  }
+
+  async function loadModalChart(id, tf) {
+    const ind = INDICATORS[id];
+    const start = startFor(tf);
+    const canvas = document.getElementById('modal-chart');
+    canvas.style.opacity = '0.4';
+
+    let raw = await fetchFRED(id, start, ind.freq);
+    let data = processData(id, raw);
+
+    canvas.style.opacity = '1';
+
+    if (data && data.length > 0) {
+      const last = data[data.length - 1];
+      const prev = data.length > 1 ? data[data.length - 2] : null;
+      document.getElementById('modal-cur-val').textContent = ind.format(last.value);
+      if (prev) {
+        const diff = last.value - prev.value;
+        const sign = diff >= 0 ? '▲' : '▼';
+        const el = document.getElementById('modal-cur-delta');
+        el.textContent = `${sign} ${Math.abs(diff).toFixed(2)} vs prior`;
+        el.className = `modal-current-delta ${diff >= 0 ? 'pos' : 'neg'}`;
+      }
+    }
+
+    renderChart('modal-chart', id, data, ind.chartType);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.getElementById('modal-panel').classList.remove('open');
+    modalOpen = false;
+    currentModalId = null;
+    document.body.style.overflow = '';
+    if (chartInstances['modal-chart']) {
+      chartInstances['modal-chart'].destroy();
+      delete chartInstances['modal-chart'];
+    }
+  }
+
+  /* ── HERO CHART ───────────────────────────────────────────────── */
+  let currentHeroTf = '1Y';
+
+  async function loadHeroChart(tf) {
+    currentHeroTf = tf;
+    document.querySelectorAll('#hero-tf .tf-pill').forEach(b => {
+      b.classList.toggle('active', b.dataset.tf === tf);
+    });
+    const start = startFor(tf);
+    const raw = await fetchFRED('SP500', start, 'd');
+    if (!raw || raw.length === 0) {
+      document.getElementById('hero-value').textContent = 'N/A';
+      document.getElementById('hero-delta').textContent = 'Data unavailable';
+      return;
+    }
+    const last = raw[raw.length - 1];
+    const prev = raw.length > 1 ? raw[raw.length - 2] : null;
+    const ind = INDICATORS['SP500'];
+
+    document.getElementById('hero-value').textContent = ind.format(last.value);
+    if (prev) {
+      const diff = last.value - prev.value;
+      const pct = (diff / prev.value) * 100;
+      const sign = diff >= 0 ? '▲' : '▼';
+      const cls  = diff >= 0 ? 'pos' : 'neg';
+      const el   = document.getElementById('hero-delta');
+      el.textContent = `${sign} ${ind.format(Math.abs(diff))} (${Math.abs(pct).toFixed(2)}%)  ·  ${fmtDate(last.date)}`;
+      el.className = `hero-delta ${cls}`;
+    }
+
+    renderChart('hero-chart', 'SP500', raw, 'line');
+  }
+
+  /* ── BOOT ─────────────────────────────────────────────────────── */
+  const STAT_IDS = Object.keys(INDICATORS).filter(id => id !== 'SP500');
+
+  async function bootAll() {
+    duplicateTicker();
+
+    // Hero
+    loadHeroChart('1Y');
+
+    // All stat cards concurrently (use 2Y lookback for sparklines + current value)
+    const promises = STAT_IDS.map(async id => {
+      const ind = INDICATORS[id];
+      const raw = await fetchFRED(id, startFor('2Y'), ind.freq);
+      const data = processData(id, raw);
+      updateStatCard(id, data);
+
+      // Ticker updates (subset)
+      const tickerMap = {
+        VIXCLS:       't-vix',
+        DGS10:        't-gs10',
+        T10Y2Y:       't-t10y2y',
+        FEDFUNDS:     't-fedfunds',
+        MORTGAGE30US: 't-mort30',
+        UNRATE:       't-unrate',
+      };
+      if (tickerMap[id]) updateTicker(id, tickerMap[id], data);
+
+      // CPI ticker special case
+      if (id === 'CPIAUCSL') {
+        const raw2 = await fetchFRED(id, startFor('2Y'), ind.freq);
+        const yoy = computeYoY(raw2);
+        updateTicker(id, 't-cpi', yoy);
+      }
+    });
+
+    // SP500 ticker
+    const spRaw = await fetchFRED('SP500', startFor('1M'), 'd');
+    if (spRaw && spRaw.length > 0) {
+      const last = spRaw[spRaw.length - 1];
+      const prev = spRaw.length > 1 ? spRaw[spRaw.length - 2] : null;
+      const el = document.getElementById('t-sp500');
+      if (el) el.textContent = INDICATORS['SP500'].format(last.value);
+      if (prev) {
+        const diff = last.value - prev.value;
+        const sign = diff >= 0 ? '▲' : '▼';
+        const dEl = document.getElementById('t-sp500-d');
+        if (dEl) {
+          dEl.textContent = `${sign} ${Math.abs(diff).toFixed(1)}`;
+          dEl.className = `ticker-delta ${diff >= 0 ? 'pos' : 'neg'}`;
+        }
+      }
+    }
+
+    // GS2 for ticker
+    const gs2Raw = await fetchFRED('DGS2', startFor('1M'), 'd');
+    if (gs2Raw && gs2Raw.length > 0) {
+      const last = gs2Raw[gs2Raw.length - 1];
+      const prev = gs2Raw.length > 1 ? gs2Raw[gs2Raw.length - 2] : null;
+      const el = document.getElementById('t-gs2');
+      if (el) el.textContent = last.value.toFixed(2) + '%';
+      if (prev) {
+        const diff = last.value - prev.value;
+        const sign = diff >= 0 ? '▲' : '▼';
+        const dEl = document.getElementById('t-gs2-d');
+        if (dEl) {
+          dEl.textContent = `${sign} ${Math.abs(diff).toFixed(2)}`;
+          dEl.className = `ticker-delta ${diff >= 0 ? 'pos' : 'neg'}`;
+        }
+      }
+    }
+
+    await Promise.allSettled(promises);
+
+    // Timestamp
+    const now = new Date();
+    const ts = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+    const ds = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('last-updated').textContent = `${ds} · ${ts}`;
+    document.getElementById('footer-time').textContent = `${ds} · ${ts}`;
+
+    // Duplicate ticker items for seamless infinite scroll
+    const track = document.getElementById('ticker-track');
+    if (track && !track.dataset.duplicated) {
+      const items = Array.from(track.querySelectorAll('.ticker-item'));
+      items.forEach(item => {
+        const clone = item.cloneNode(true);
+        // Remove IDs from clones to avoid duplicates in DOM
+        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+        track.appendChild(clone);
+      });
+      track.dataset.duplicated = '1';
+    }
+  }
+
+  /* ── EVENT LISTENERS ─────────────────────────────────────────── */
+  document.getElementById('modal-overlay').addEventListener('click', closeModal);
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modalOpen) closeModal();
+  });
+
+  document.querySelectorAll('#hero-tf .tf-pill').forEach(btn => {
+    btn.addEventListener('click', () => loadHeroChart(btn.dataset.tf));
+  });
+
+  document.querySelectorAll('.stat-card.clickable').forEach(card => {
+    card.addEventListener('click', () => openModal(card.dataset.indicator));
+  });
+
+  /* ── INIT ─────────────────────────────────────────────────────── */
+  bootAll();
+  </script>
+</body>
+</html>
